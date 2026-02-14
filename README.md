@@ -8,6 +8,10 @@ sudo apt update
 ```
 sudo modprobe br_netfilter
 ```
+**Load Kernel Modules
+```
+modprobe overlay
+```
 
 **Enable IP forwarding (allow host to route container traffic)**
 ```
