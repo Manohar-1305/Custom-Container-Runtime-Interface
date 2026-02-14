@@ -1,9 +1,26 @@
-sudo apt update                                  # Refresh package index from configured repositories
+**Prerequisites**
 
-sudo apt install -y runc skopeo umoci iproute2 iptables jq   # Install container runtime, image tools, networking utilities, and JSON processor
+__Refresh package index__
 
-sudo modprobe overlay                            # Load OverlayFS kernel module (required for layered container filesystems)
+```
+sudo apt update
+```
 
-sudo modprobe br_netfilter                       # Enable bridge network filtering for container networking
+** Install container runtime and required tools**
+```
+sudo apt install -y runc skopeo umoci iproute2 iptables jq
+```
 
-sudo sysctl -w net.ipv4.ip_forward=1             # Enable IP forwarding so the host can route container traffic
+Load OverlayFS kernel module (for layered container filesystems)
+
+sudo modprobe overlay
+
+
+Enable bridge network filtering (required for container networking)
+
+sudo modprobe br_netfilter
+
+
+Enable IP forwarding (allow host to route container traffic)
+
+sudo sysctl -w net.ipv4.ip_forward=1
