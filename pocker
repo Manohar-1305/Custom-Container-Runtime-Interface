@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+POCKER_HOME=/opt/pocker
+export POCKER_HOME
+
+CMD="$1"
+shift || true
+
+case "$CMD" in
+  pull)   exec "$POCKER_HOME/bin/pocker-pull" "$@" ;;
+  images) exec "$POCKER_HOME/bin/pocker-images" ;;
+  build)  exec "$POCKER_HOME/bin/pocker-build" "$@" ;;
+  login)  exec "$POCKER_HOME/bin/pocker-login" "$@" ;;
+  run)    exec "$POCKER_HOME/bin/pocker-run" "$@" ;;
+  ps)     exec "$POCKER_HOME/bin/pocker-ps" "$@" ;;
+  stop)   exec "$POCKER_HOME/bin/pocker-stop" "$@" ;;
+  start)  exec "$POCKER_HOME/bin/pocker-start" "$@" ;;
+  rm)     exec "$POCKER_HOME/bin/pocker-rm" "$@" ;;
+  rmi)    exec "$POCKER_HOME/bin/pocker-rmi" "$@" ;;
+  exec)   exec "$POCKER_HOME/bin/pocker-exec" "$@" ;;
+  *)
+    echo "Unknown command: $CMD"
+    exit 1
+    ;;
+esac
