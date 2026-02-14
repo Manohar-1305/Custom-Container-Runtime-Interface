@@ -1,0 +1,110 @@
+#!/usr/bin/env bash
+set -e
+
+TTY=0
+DETACH=0
+
+if [ "$1" = "-it" ]; then
+  TTY=1
+  shift
+fi
+
+if [ "$1" = "-d" ]; then
+  DETACH=1
+  shift
+fi
+
+ARG="$1"
+shift
+
+[ -z "$ARG" ] && { echo "image required"; exit 1; }
+
+if [[ "$ARG" == *":"* ]]; then
+  IMAGE_REF="$ARG"
+else
+  TAG="$1"
+  [ -z "$TAG" ] && { echo "tag required"; exit 1; }
+  IMAGE_REF="$ARG:$TAG"
+  shift
+fi
+
+CMD_OVERRIDE=("$@")
+
+POCKER_HOME=/opt/pocker
+IMAGES="$POCKER_HOME/images"
+CONTAINERS="$POCKER_HOME/containers"
+RUNC_ROOT="/opt/pocker/runtime"
+
+mkdir -p "$RUNC_ROOT"
+
+IMAGE_KEY=$(echo "$IMAGE_REF" | tr '/:' '_')
+IMAGE_DIR="$IMAGES/$IMAGE_KEY"
+[ ! -d "$IMAGE_DIR" ] && { echo "image not found"; exit 1; }
+
+CID=$(date +%s%N | cut -c1-12)
+CTR_DIR="$CONTAINERS/$CID"
+BUNDLE="$CTR_DIR/bundle"
+LOG_DIR="$CTR_DIR/logs"
+
+mkdir -p "$BUNDLE"
+mkdir -p "$LOG_DIR"
+
+umoci unpack --image "$IMAGE_DIR:latest" "$BUNDLE" >/dev/null 2>&1
+
+if [ ${#CMD_OVERRIDE[@]} -gt 0 ]; then
+  jq --argjson cmd "$(printf '%s\n' "${CMD_OVERRIDE[@]}" | jq -R . | jq -s .)" \
+     '.process.args = $cmd' \
+     "$BUNDLE/config.json" > "$BUNDLE/config.json.tmp"
+  mv "$BUNDLE/config.json.tmp" "$BUNDLE/config.json"
+fi
+
+jq '
+  .process.terminal=false |
+  .linux.namespaces |= map(select(.type != "user")) |
+  .process.capabilities = {
+    "bounding": [
+      "CAP_CHOWN","CAP_DAC_OVERRIDE","CAP_FOWNER","CAP_FSETID",
+      "CAP_KILL","CAP_SETGID","CAP_SETUID","CAP_SETPCAP",
+      "CAP_NET_BIND_SERVICE","CAP_NET_RAW","CAP_SYS_CHROOT",
+      "CAP_MKNOD","CAP_AUDIT_WRITE","CAP_SETFCAP"
+    ],
+    "effective": [
+      "CAP_CHOWN","CAP_DAC_OVERRIDE","CAP_FOWNER","CAP_FSETID",
+      "CAP_KILL","CAP_SETGID","CAP_SETUID","CAP_SETPCAP",
+      "CAP_NET_BIND_SERVICE","CAP_NET_RAW","CAP_SYS_CHROOT",
+      "CAP_MKNOD","CAP_AUDIT_WRITE","CAP_SETFCAP"
+    ],
+    "permitted": [
+      "CAP_CHOWN","CAP_DAC_OVERRIDE","CAP_FOWNER","CAP_FSETID",
+      "CAP_KILL","CAP_SETGID","CAP_SETUID","CAP_SETPCAP",
+      "CAP_NET_BIND_SERVICE","CAP_NET_RAW","CAP_SYS_CHROOT",
+      "CAP_MKNOD","CAP_AUDIT_WRITE","CAP_SETFCAP"
+    ]
+  }
+' "$BUNDLE/config.json" > "$BUNDLE/config.json.tmp"
+
+mv "$BUNDLE/config.json.tmp" "$BUNDLE/config.json"
+
+# IMPORTANT FIX: use runc run instead of create + start
+if [ "$DETACH" -eq 1 ]; then
+  nohup runc --root "$RUNC_ROOT" run --bundle "$BUNDLE" "$CID" \
+      >"$LOG_DIR/stdout.log" \
+      2>"$LOG_DIR/stderr.log" \
+      < /dev/null &
+  disown
+else
+  runc --root "$RUNC_ROOT" run --bundle "$BUNDLE" "$CID" \
+      >"$LOG_DIR/stdout.log" \
+      2>"$LOG_DIR/stderr.log"
+fi
+
+/opt/pocker/bin/pocker-net "$CID" >/dev/null 2>&1 || true
+
+cat >"$CTR_DIR/meta" <<META
+id=$CID
+image=$IMAGE_REF
+status=running
+created=$(date +%s)
+META
+
+echo "$CID"

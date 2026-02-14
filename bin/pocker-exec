@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+TTY=0
+if [ "$1" = "-it" ]; then
+  TTY=1
+  shift
+fi
+
+CID="$1"
+shift
+
+[ -z "$CID" ] && { echo "container id required"; exit 1; }
+[ $# -eq 0 ] && { echo "command required"; exit 1; }
+
+# Find correct runc root by checking common locations
+for ROOT in /run/runc /opt/pocker/runtime; do
+  if runc --root "$ROOT" state "$CID" >/dev/null 2>&1; then
+    RUNC_ROOT="$ROOT"
+    break
+  fi
+done
+
+[ -z "$RUNC_ROOT" ] && { echo "container does not exist"; exit 1; }
+
+if [ "$TTY" -eq 1 ]; then
+  exec runc --root "$RUNC_ROOT" exec --tty "$CID" "$@"
+else
+  exec runc --root "$RUNC_ROOT" exec "$CID" "$@"
+fi

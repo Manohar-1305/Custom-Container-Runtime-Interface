@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+set -e
+
+FOLLOW=0
+
+if [ "$1" = "-f" ]; then
+  FOLLOW=1
+  shift
+fi
+
+CID="$1"
+[ -z "$CID" ] && { echo "container id required"; exit 1; }
+
+LOG_DIR="/opt/pocker/containers/$CID/logs"
+
+[ ! -d "$LOG_DIR" ] && { echo "no logs found"; exit 1; }
+
+STDOUT_LOG="$LOG_DIR/stdout.log"
+STDERR_LOG="$LOG_DIR/stderr.log"
+
+[ ! -f "$STDOUT_LOG" ] && touch "$STDOUT_LOG"
+[ ! -f "$STDERR_LOG" ] && touch "$STDERR_LOG"
+
+if [ "$FOLLOW" -eq 1 ]; then
+  tail -f "$STDOUT_LOG" "$STDERR_LOG"
+else
+  cat "$STDOUT_LOG"
+  cat "$STDERR_LOG"
+fi

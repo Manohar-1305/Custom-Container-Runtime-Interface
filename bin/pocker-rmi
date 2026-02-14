@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+
+IMAGE="$1"
+TAG="$2"
+
+if [ -z "$IMAGE" ] || [ -z "$TAG" ]; then
+  echo "usage: pocker rmi <image> <tag>"
+  exit 1
+fi
+
+POCKER_HOME=/opt/pocker
+IMAGES_DIR="$POCKER_HOME/images"
+CONTAINERS_DIR="$POCKER_HOME/containers"
+
+IMAGE_REF="$IMAGE:$TAG"
+TARGET_DIR="$IMAGES_DIR/${IMAGE}_${TAG}"
+
+if [ ! -d "$TARGET_DIR" ]; then
+  echo "image not found: $IMAGE_REF"
+  exit 1
+fi
+
+# block removal if ANY container references this image
+for c in "$CONTAINERS_DIR"/*; do
+  [ -f "$c/meta" ] || continue
+
+  img=$(grep '^image=' "$c/meta" | cut -d= -f2)
+
+  if [ "$img" = "$IMAGE_REF" ]; then
+    echo "cannot delete image $IMAGE_REF: image is used by container $(basename "$c")"
+    exit 1
+  fi
+done
+
+rm -rf "$TARGET_DIR"
+
+echo "deleted image: $IMAGE_REF"

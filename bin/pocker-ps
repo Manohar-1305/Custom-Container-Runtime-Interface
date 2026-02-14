@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+POCKER_HOME=/opt/pocker
+CONTAINERS="$POCKER_HOME/containers"
+
+ALL=0
+[ "$1" = "-a" ] && ALL=1
+
+printf "%-14s %-20s %-12s %-10s %-10s %-20s\n" \
+"CONTAINER ID" "IMAGE" "COMMAND" "CREATED" "STATUS" "NAMES"
+
+for c in "$CONTAINERS"/*; do
+  [ -f "$c/meta" ] || continue
+  source "$c/meta"
+
+  if [ "$ALL" -eq 0 ] && [ "$status" != "running" ]; then
+    continue
+  fi
+
+  age=$(( ($(date +%s) - created) / 60 ))
+  created_h="${age}m ago"
+
+  if echo "$image" | grep -q '^ubuntu'; then
+    cmd="/bin/bash"
+  else
+    cmd="/bin/sh"
+  fi
+
+  printf "%-14s %-20s %-12s %-10s %-10s %-20s\n" \
+    "$id" "$image" "$cmd" "$created_h" "$status" "$name"
+done

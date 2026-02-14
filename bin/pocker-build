@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -e
+
+if [ "$1" != "-t" ]; then
+  echo "usage: pocker-build -t image:tag ."
+  exit 1
+fi
+
+IMAGE_REF="$2"
+CONTEXT="$3"
+
+[ -z "$IMAGE_REF" ] && { echo "image:tag required"; exit 1; }
+[ -z "$CONTEXT" ] && { echo "build context required"; exit 1; }
+
+IMAGE_KEY=$(echo "$IMAGE_REF" | tr '/:' '_')
+DEST="/opt/pocker/images/$IMAGE_KEY"
+
+mkdir -p "$DEST"
+
+buildah bud --format oci -t "$IMAGE_REF" "$CONTEXT"
+buildah push "$IMAGE_REF" oci:"$DEST":latest
+
+echo "Build complete: $IMAGE_REF"

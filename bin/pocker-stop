@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+
+RUNC_ROOT="/opt/pocker/runtime"
+
+if [ "$#" -eq 0 ]; then
+  echo "container id required"
+  exit 1
+fi
+
+for CID in "$@"; do
+
+  CTR_DIR="/opt/pocker/containers/$CID"
+  META="$CTR_DIR/meta"
+
+  if [ ! -d "$CTR_DIR" ]; then
+    echo "container $CID not found"
+    continue
+  fi
+
+  # Graceful stop
+  runc --root "$RUNC_ROOT" kill "$CID" SIGTERM >/dev/null 2>&1 || true
+  sleep 1
+
+  # Force stop
+  runc --root "$RUNC_ROOT" kill "$CID" SIGKILL >/dev/null 2>&1 || true
+
+  # Delete runtime state
+  runc --root "$RUNC_ROOT" delete -f "$CID" >/dev/null 2>&1 || true
+
+  # Update metadata
+  if [ -f "$META" ]; then
+    sed -i '/^status=/d' "$META"
+    echo "status=stopped" >> "$META"
+  fi
+
+  echo "$CID stopped"
+
+done

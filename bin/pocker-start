@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+CID="$1"
+[ -z "$CID" ] && exit 0
+
+CTR_DIR=/opt/pocker/containers/$CID
+[ ! -f "$CTR_DIR/meta" ] && exit 0
+
+source "$CTR_DIR/meta"
+
+[ "$status" = "running" ] && exit 0
+
+runc start "$CID" >/dev/null 2>&1 || true
+
+sed -i 's/status=stopped/status=running/' "$CTR_DIR/meta"
+
+echo "$CID"

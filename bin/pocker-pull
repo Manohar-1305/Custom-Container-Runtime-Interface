@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+
+IMAGE="$1"
+TAG="$2"
+
+if [ -z "$IMAGE" ]; then
+  echo "image required"
+  exit 1
+fi
+
+# if tag provided as second argument
+if [ -n "$TAG" ]; then
+  IMAGE_REF="$IMAGE:$TAG"
+# if image already contains tag
+elif [[ "$IMAGE" == *":"* ]]; then
+  IMAGE_REF="$IMAGE"
+# default to latest
+else
+  IMAGE_REF="$IMAGE:latest"
+fi
+
+POCKER_HOME=/opt/pocker
+IMAGES_DIR="$POCKER_HOME/images"
+
+NAME=$(echo "$IMAGE_REF" | tr '/:' '_')
+TARGET="$IMAGES_DIR/$NAME"
+
+mkdir -p "$TARGET"
+
+echo "Pulling image: $IMAGE_REF"
+echo "Target: $TARGET"
+echo
+
+skopeo copy \
+  --override-os linux \
+  --override-arch amd64 \
+  docker://"$IMAGE_REF" \
+  oci:"$TARGET":latest

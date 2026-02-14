@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -e
+
+CONTAINERS_DIR="/opt/pocker/containers"
+
+while true; do
+  for meta in "$CONTAINERS_DIR"/*/meta; do
+    [ -f "$meta" ] || continue
+
+    source "$meta"
+    [ "$status" != "running" ] && continue
+
+    if ! runc list | grep -q "$id"; then
+      echo "Restarting container $id"
+      BUNDLE="$CONTAINERS_DIR/$id/bundle"
+      runc create --bundle "$BUNDLE" "$id" >/dev/null 2>&1 || true
+      runc start "$id" >/dev/null 2>&1 || true
+      /opt/pocker/bin/pocker-net "$id" >/dev/null 2>&1 || true
+    fi
+  done
+
+  sleep 5
+done

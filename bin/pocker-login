@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -e
+
+REGISTRY="$1"
+[ -z "$REGISTRY" ] && { echo "registry required"; exit 1; }
+
+read -p "Username: " USER
+read -s -p "Password: " PASS
+echo
+
+AUTH=$(echo -n "$USER:$PASS" | base64)
+
+mkdir -p /opt/pocker
+cat >/opt/pocker/config.json <<CONFIG
+{
+  "auths": {
+    "$REGISTRY": {
+      "auth": "$AUTH"
+    }
+  }
+}
+CONFIG
+
+echo "Login Succeeded"
