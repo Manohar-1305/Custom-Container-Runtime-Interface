@@ -1,19 +1,7 @@
-**Prerequisites**
-
-__Refresh package index__
-
-```
+**Refresh package index**
+```bash
 sudo apt update
 ```
-
-** Install container runtime and required tools**
-```
-sudo apt install -y runc skopeo umoci iproute2 iptables jq
-```
-
-Load OverlayFS kernel module (for layered container filesystems)
-
-sudo modprobe overlay
 
 
 Enable bridge network filtering (required for container networking)
