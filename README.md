@@ -1,18 +1,9 @@
-* Prerequisites
+sudo apt update                                  # Refresh package index from configured repositories
 
-Run the following on the host:
+sudo apt install -y runc skopeo umoci iproute2 iptables jq   # Install container runtime, image tools, networking utilities, and JSON processor
 
-sudo apt update
-sudo apt install -y runc skopeo umoci iproute2 iptables jq
+sudo modprobe overlay                            # Load OverlayFS kernel module (required for layered container filesystems)
 
-sudo modprobe overlay
-sudo modprobe br_netfilter
+sudo modprobe br_netfilter                       # Enable bridge network filtering for container networking
 
-sudo sysctl -w net.ipv4.ip_forward=1
-
-Make kernel settings persistent (recommended)
-echo "overlay" | sudo tee /etc/modules-load.d/pocker.conf
-echo "br_netfilter" | sudo tee -a /etc/modules-load.d/pocker.conf
-
-echo "net.ipv4.ip_forward=1" | sudo tee /etc/sysctl.d/99-pocker.conf
-sudo sysctl --system
+sudo sysctl -w net.ipv4.ip_forward=1             # Enable IP forwarding so the host can route container traffic
