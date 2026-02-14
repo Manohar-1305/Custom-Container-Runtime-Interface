@@ -1,0 +1,16 @@
+[Unit]
+Description=Pocker Container Runtime
+After=network.target
+Requires=network.target
+
+[Service]
+Type=simple
+ExecStartPre=/usr/bin/mkdir -p /opt/pocker/{bin,images,containers,logs,rootfs,runtime}
+ExecStartPre=/usr/bin/mkdir -p /run/pocker
+ExecStart=/opt/pocker/bin/pocker-daemon
+Restart=always
+RestartSec=3
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target
