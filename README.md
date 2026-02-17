@@ -31,6 +31,13 @@ sudo sysctl -w net.ipv4.ip_forward=1
 
 <img width="640" height="185" alt="image" src="https://github.com/user-attachments/assets/f0c67b48-97e9-4388-b502-147f77f4650f" />
 
+**Pocker run**
+
+```
+pocker run ubuntu:latest
+pocker run nginx:latest
+```
+
 **Pocker PS**
 
 <img width="611" height="137" alt="image" src="https://github.com/user-attachments/assets/8e0b5c44-7e30-4c7d-bf6a-380de10c23b3" />
