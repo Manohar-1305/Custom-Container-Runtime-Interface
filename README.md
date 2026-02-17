@@ -21,6 +21,12 @@ sudo sysctl -w net.ipv4.ip_forward=1
 
 ![1](https://github.com/user-attachments/assets/1e46f6e4-f7fb-4940-b67a-4a1d438603ea)
 
+**Pocker PS**
+
+<img width="611" height="137" alt="image" src="https://github.com/user-attachments/assets/8e0b5c44-7e30-4c7d-bf6a-380de10c23b3" />
+
+
+
 
 
 
